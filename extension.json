@@ -1,0 +1,41 @@
+{
+  "name": "DiscordOauth2",
+  "author": "Rph <rphsoftware@gmail.com>",
+  "url": "https://www.mediawiki.org/wiki/Extension:Example",
+  "description": "Implements a Discord Oauth2 login gate before users can make an account.",
+  "version": "1.0",
+  "license-name": "MIT",
+  "type": "other",
+  "manifest_version": 1,
+  "config": {
+    "DiscordOauth2ClientId": {
+      "value": false,
+      "description": "The client ID for your Discord application"
+    },
+    "DiscordOauth2ClientSecret": {
+      "value": false,
+      "description": "The client secret for your Discord application"
+    },
+    "DiscordOauth2RedirectUri": {
+      "value": false,
+      "description": "The redirect URI application (URL to Special:DiscordAuthorize/Redirect )"
+    }
+  },
+  "AutoloadNamespaces": {
+    "MediaWiki\\Extension\\RphDiscordOauth\\": "includes/"
+  },
+  "SpecialPages": {
+    "DiscordAuthorize": "MediaWiki\\Extension\\RphDiscordOauth\\SpecialDiscordAuthorize"
+  },
+  "Hooks": {
+    "LoadExtensionSchemaUpdates": "MediaWiki\\Extension\\RphDiscordOauth\\Hooks::onLoadExtensionSchemaUpdates",
+    "SpecialPageBeforeExecute": "MediaWiki\\Extension\\RphDiscordOauth\\Hooks::onBeforePageDisplay"
+  },
+  "AuthManagerAutoConfig": {
+    "preauth": {
+      "DiscordPreAuthenticationProvider": {
+        "class": "MediaWiki\\Extension\\RphDiscordOauth\\PreAuthProvider"
+      }
+    }
+  }
+}
