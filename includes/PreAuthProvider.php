@@ -20,7 +20,7 @@ class PreAuthProvider extends AbstractPreAuthenticationProvider {
     {
         global $wgRequest;
         $lb = MediaWikiServices::getInstance()->getDBLoadBalancer();
-        $dbr = $lb->getConnectionRef( DB_PRIMARY );
+        $dbr = $lb->getConnectionRef( $lb::DB_PRIMARY );
         $dbr->insert('discord_oauth2_users', [
             'id' => $user->mId,
             'discordId' => $wgRequest->getSessionData('discord_user_id')

@@ -4,6 +4,18 @@ namespace MediaWiki\Extension\RphDiscordOauth;
 
 use MediaWiki\MediaWikiServices;
 
+/// The following function is licensed separately under the terms of CC BY-SA 4.0
+/// Link to original: https://stackoverflow.com/a/4356295
+function generateRandomString($length = 10) {
+    $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    $charactersLength = strlen($characters);
+    $randomString = '';
+    for ($i = 0; $i < $length; $i++) {
+        $randomString .= $characters[rand(0, $charactersLength - 1)];
+    }
+    return $randomString;
+}
+
 class SpecialDiscordAuthorize extends \UnlistedSpecialPage {
     public function __construct()
     {
@@ -13,8 +25,8 @@ class SpecialDiscordAuthorize extends \UnlistedSpecialPage {
     public function execute( $sub ) {
         global $wgRequest;
         if ($wgRequest->getSessionData('discord_validated') === "YES") {
-            $this->getOutput()->setPageTitle("Logging in with discord");
-            $this->getOutput()->addHTML("<h2>Hello " . htmlentities($wgRequest->getSessionData('discord_username')) . "! You can now create an account!</h2><a href='/Special:CreateAccount'>Continue to account creation</a>");
+            $this->getOutput()->setPageTitle("Log in with Discord");
+            $this->getOutput()->redirect("/Special:CreateAccount");
             return;
         }
         if ($sub === "Redirect") {
@@ -33,20 +45,20 @@ class SpecialDiscordAuthorize extends \UnlistedSpecialPage {
         $clientId = $config->get("DiscordOauth2ClientId");
         $callbackUri = urlencode($config->get("DiscordOauth2RedirectUri"));
 
-        $out->setPageTitle("Logging in with discord");
-        $state = bin2hex(openssl_random_pseudo_bytes(64));
+        $out->setPageTitle("Log in with Discord");
+        $state = generateRandomString(64);
         $wgRequest->getSession()->set("discord_oauth_state", $state);
         $out->addHTML("
-<strong>For security reasons, this wiki requires you associate your Discord Account with your session prior to making an account here.</strong>
+<b>For security reasons, this wiki requires you associate your Discord account with your session in order to create an account.</b>
 <p>This process will let us know the following:</p>
 <ul>
     <li>Your Discord ID</li>
-    <li>Your Discord Username and Tag</li>
-    <li>Your Discord Profile Picture</li>
-    <li>The Email Address associated with your Discord Account</li>
+    <li>Your Discord username and tag</li>
+    <li>Your Discord profile picture</li>
+    <li>The Email address associated with your Discord account</li>
 </ul>
 <p>You are only required to do this once, afterwards you will be able to make an account and later log in to it normally.</p>
-<a href='https://discord.com/oauth2/authorize?state=$state&client_id=$clientId&response_type=code&scope=identify%20email&redirect_uri=$callbackUri'>Click here to continue.</a>
+<b><a href='https://discord.com/oauth2/authorize?state=$state&client_id=$clientId&response_type=code&scope=identify%20email&redirect_uri=$callbackUri'>Click here to log in with Discord.</a></b>
 ");
     }
 
@@ -128,12 +140,12 @@ class SpecialDiscordAuthorize extends \UnlistedSpecialPage {
         }
 
         $lb = MediaWikiServices::getInstance()->getDBLoadBalancer();
-        $dbr = $lb->getConnectionRef( DB_PRIMARY );
+        $dbr = $lb->getConnectionRef( $lb::DB_PRIMARY );
         $res = $dbr->select('discord_oauth2_users', ['id', 'discordId'], [
             'discordId' => $tokenResponse['id']
         ], __METHOD__, []);
         if ($res->numRows() > 0) {
-            $this->getOutput()->addHTML("<h2>This discord account is already associated with a wiki account. Please log in instead.</h2>");
+            $this->getOutput()->addHTML("<h2>This Discord account is already associated with an existing account. Please log in instead.</h2>");
             $this->__render_prompt();
             return;
         }
@@ -142,7 +154,8 @@ class SpecialDiscordAuthorize extends \UnlistedSpecialPage {
         $wgRequest->getSession()->set('discord_username', $tokenResponse['username']);
 
         $this->getOutput()->setPageTitle("Logging in with discord");
-        $this->getOutput()->addHTML("<h2>Hello " . htmlentities($tokenResponse['username']) . "! You can now create an account!</h2><a href='/Special:CreateAccount'>Continue to account creation</a>");
+        //$this->getOutput()->addHTML("<h2>Hello " . htmlentities($tokenResponse['username']) . "! You can now create an account!</h2><a href='/Special:CreateAccount'>Continue to account creation</a>");
+        $this->getOutput()->redirect("/Special:CreateAccount");
     }
 
     protected function getGroupName() {
